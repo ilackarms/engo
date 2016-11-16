@@ -32,8 +32,8 @@ func (s *Subsheet) Cell(index int) Texture {
 	}
 
 	cellsPerRow := int(s.Width())
-	var x float32 = float32((index % cellsPerRow) * s.cellWidth)
-	var y float32 = float32((index / cellsPerRow) * s.cellHeight)
+	var x float32 = float32((index % cellsPerRow) * s.cellWidth + s.offsetX)
+	var y float32 = float32((index / cellsPerRow) * s.cellHeight + s.offsetY)
 	s.cache[index] = Texture{id: s.parent.texture, width: float32(s.cellWidth), height: float32(s.cellHeight), viewport: engo.AABB{
 		engo.Point{x / s.width, y / s.height},
 		engo.Point{(x + float32(s.cellWidth)) / s.width, (y + float32(s.cellHeight)) / s.height},
@@ -121,6 +121,10 @@ func (ms *MultiSheet) CellIndex(subsheetIndex, regionIndex int) int {
 	}
 
 	return index
+}
+
+func (ms *MultiSheet) Cell(subsheetIndex, regionIndex int) Texture {
+	return ms.subsheets[subsheetIndex].Cell(regionIndex)
 }
 
 func (ms *MultiSheet) Drawables() []Drawable {

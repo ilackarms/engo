@@ -26,8 +26,8 @@ var (
 	leftButton  = "left"
 	rightButton = "right"
 	model       = "motw.png"
-	width       = 52
-	height      = 73
+	width       = 62
+	height      = 99
 	levelWidth  float32
 	levelHeight float32
 )
@@ -144,8 +144,13 @@ func (scene *DefaultScene) Setup(w *ecs.World) {
 	levelWidth = levelData.Bounds().Max.X
 	levelHeight = levelData.Bounds().Max.Y
 
+	//base subsheet
+	subsheets := []*common.Subsheet{
+		common.NewSubsheet(float32(24*width), float32(16*height), 0, 5, width, height),
+	}
+
 	// Create Hero
-	spriteSheet := common.NewSpritesheetFromFile(model, width, height)
+	spriteSheet := common.NewMultiSheetFromFile(model, subsheets)
 
 	hero := scene.CreateHero(
 		engo.Point{engo.CanvasWidth() / 2, engo.CanvasHeight() / 2},
@@ -288,7 +293,7 @@ func (scene *DefaultScene) Setup(w *ecs.World) {
 
 func (*DefaultScene) Type() string { return "DefaultScene" }
 
-func (*DefaultScene) CreateHero(point engo.Point, spriteSheet *common.Spritesheet) *Hero {
+func (*DefaultScene) CreateHero(point engo.Point, spriteSheet *common.MultiSheet) *Hero {
 	hero := &Hero{BasicEntity: ecs.NewBasic()}
 
 	hero.SpaceComponent = common.SpaceComponent{
@@ -297,7 +302,7 @@ func (*DefaultScene) CreateHero(point engo.Point, spriteSheet *common.Spriteshee
 		Height:   float32(height),
 	}
 	hero.RenderComponent = common.RenderComponent{
-		Drawable: spriteSheet.Cell(0),
+		Drawable: spriteSheet.Cell(0, 0),
 		Scale:    engo.Point{1, 1},
 	}
 	hero.AnimationComponent = common.NewAnimationComponent(spriteSheet.Drawables(), 0.1)
