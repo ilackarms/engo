@@ -9,30 +9,39 @@ import (
 
 // Subsheet is an animation set within a larger multisheet
 type Subsheet struct {
-	width, height         float32 //dimensions of the subsheet
+	width, height         float32 // dimensions of the subsheet
 	cellWidth, cellHeight int     // The dimensions of the cells within the subsheet
-	offsetX, offsetY      int
+	offsetX, offsetY      int     // Offset relative to 0,0 where the subsheet begins
+}
+
+func NewSubsheet(width, height float32, cellWidth, cellHeight, offsetX, offsetY int) *Subsheet {
+	return &Subsheet{
+		width:      width,
+		height:     height,
+		cellWidth:  cellWidth,
+		cellHeight: cellHeight,
+		offsetX:    offsetX,
+		offsetY:    offsetX,
+	}
 }
 
 // Multisheet is a class that stores a set of tiles from a file, used by tilemaps and animations
 type Multisheet struct {
-	texture               *gl.Texture     // The original texture
-	width, height         float32         // The dimensions of the total texture
-	cellWidth, cellHeight int             // The dimensions of the cells
-	cache                 map[int]Texture // The cell cache cells
+	texture   *gl.Texture         // The original texture
+	subsheets map[string]Subsheet // The subsheets that make up the multisheet
+	cache     map[int]Texture     // The cell cache cells
 }
 
-func NewMultisheetFromTexture(tr *TextureResource, cellWidth, cellHeight int) *Multisheet {
+func NewMultisheetFromTexture(tr *TextureResource, subsheets map[string]*Subsheet) *Multisheet {
 	return &Multisheet{texture: tr.Texture,
-		width: tr.Width, height: tr.Height,
-		cellWidth: cellWidth, cellHeight: cellHeight,
-		cache: make(map[int]Texture),
+		subsheets: subsheets,
+		cache:     make(map[int]Texture),
 	}
 }
 
 // NewMultisheetFromFile is a simple handler for creating a new multisheet from a file
 // textureName is the name of a texture already preloaded with engo.Files.Add
-func NewMultisheetFromFile(textureName string, cellWidth, cellHeight int) *Multisheet {
+func NewMultisheetFromFile(textureName string, subsheets map[string]*Subsheet) *Multisheet {
 	res, err := engo.Files.Resource(textureName)
 	if err != nil {
 		log.Println("[WARNING] [NewMultisheetFromFile]: Received error:", err)
@@ -45,32 +54,53 @@ func NewMultisheetFromFile(textureName string, cellWidth, cellHeight int) *Multi
 		return nil
 	}
 
-	return NewMultisheetFromTexture(&img, cellWidth, cellHeight)
+	return NewMultisheetFromTexture(&img, subsheets)
 }
 
 // Cell gets the region at the index i, updates and pulls from cache if need be
-func (s *Multisheet) Cell(index int) Texture {
+func (s *Multisheet) Cell(animationName string, index int) Texture {
 	if r, ok := s.cache[index]; ok {
 		return r
 	}
 
-	cellsPerRow := int(s.Width())
-	var x float32 = float32((index % cellsPerRow) * s.cellWidth)
-	var y float32 = float32((index / cellsPerRow) * s.cellHeight)
-	s.cache[index] = Texture{id: s.texture, width: float32(s.cellWidth), height: float32(s.cellHeight), viewport: engo.AABB{
-		engo.Point{x / s.width, y / s.height},
-		engo.Point{(x + float32(s.cellWidth)) / s.width, (y + float32(s.cellHeight)) / s.height},
-	}}
+	subsheet, ok := s.subsheets[animationName]
+	if !ok {
+		log.Fatalf("%s is not a valid aniation for %v", animationName, s)
+	}
+
+	cellsPerRow := int(subsheet.width)
+	var x float32 = float32((index%cellsPerRow)*subsheet.cellWidth + subsheet.offsetX)
+	var y float32 = float32((index/cellsPerRow)*subsheet.cellHeight + subsheet.offsetY)
+	s.cache[index] = Texture{
+		id:     s.texture,
+		width:  float32(subsheet.cellWidth),
+		height: float32(subsheet.cellHeight),
+		viewport: engo.AABB{
+			engo.Point{
+				X: x / subsheet.width,
+				Y: y / subsheet.height,
+			},
+			engo.Point{
+				X: (x + float32(subsheet.cellWidth)) / subsheet.width,
+				Y: (y + float32(subsheet.cellHeight)) / subsheet.height,
+			},
+		},
+	}
 
 	return s.cache[index]
 }
 
-func (s *Multisheet) Drawable(index int) Drawable {
-	return s.Cell(index)
+func (s *Multisheet) Drawable(animationName string, index int) Drawable {
+	return s.Cell(animationName, index)
 }
 
 func (s *Multisheet) Drawables() []Drawable {
 	drawables := make([]Drawable, s.CellCount())
+	var i int
+	for animationName, subsheet := range s.subsheets {
+		drawables[i] = s.Drawable(animationName, i)
+		i++
+	}
 
 	for i := 0; i < s.CellCount(); i++ {
 		drawables[i] = s.Drawable(i)
@@ -79,7 +109,7 @@ func (s *Multisheet) Drawables() []Drawable {
 	return drawables
 }
 
-func (s *Multisheet) CellCount() int {
+func (s *Subsheet) CellCount() int {
 	return int(s.Width()) * int(s.Height())
 }
 
@@ -94,12 +124,12 @@ func (s *Multisheet) Cells() []Texture {
 }
 
 // Width is the amount of tiles on the x-axis of the multisheet
-func (s Multisheet) Width() float32 {
+func (s Subsheet) Width() float32 {
 	return s.width / float32(s.cellWidth)
 }
 
 // Height is the amount of tiles on the y-axis of the multisheet
-func (s Multisheet) Height() float32 {
+func (s Subsheet) Height() float32 {
 	return s.height / float32(s.cellHeight)
 }
 

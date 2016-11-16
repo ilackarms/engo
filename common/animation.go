@@ -18,7 +18,7 @@ type AnimationComponent struct {
 	Animations       map[string]*Animation // All possible animations
 	CurrentAnimation *Animation            // The current animation
 	Rate             float32               // How often frames should increment, in seconds.
-	index            int                   // What frame in the is being used
+	index            int                   // What frame in the animation is being used
 	change           float32               // The time since the last incrementation
 	def              string                // The default animation to play when nothing else is playing
 }
