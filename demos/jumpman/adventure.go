@@ -26,7 +26,7 @@ var (
 	leftButton  = "left"
 	rightButton = "right"
 	model       = "motw.png"
-	width       = 62
+	width       = 87
 	height      = 99
 	levelWidth  float32
 	levelHeight float32
@@ -66,45 +66,45 @@ func (*DefaultScene) Preload() {
 
 	StopUpAction = &common.Animation{
 		Name:   "upstop",
-		Frames: []int{37},
+		Frames: []int{60},
 	}
 
 	StopDownAction = &common.Animation{
 		Name:   "downstop",
-		Frames: []int{1},
+		Frames: []int{4},
 	}
 
 	StopLeftAction = &common.Animation{
 		Name:   "leftstop",
-		Frames: []int{13},
+		Frames: []int{36},
 	}
 
 	StopRightAction = &common.Animation{
 		Name:   "rightstop",
-		Frames: []int{25},
+		Frames: []int{100},
 	}
 
 	WalkUpAction = &common.Animation{
 		Name:   "up",
-		Frames: []int{36, 37, 38},
+		Frames: []int{64, 65, 66, 67, 68, 69, 70, 71},
 		Loop:   true,
 	}
 
 	WalkDownAction = &common.Animation{
 		Name:   "down",
-		Frames: []int{0, 1, 2},
+		Frames: []int{0, 1, 2, 3, 4, 5, 6, 7},
 		Loop:   true,
 	}
 
 	WalkLeftAction = &common.Animation{
 		Name:   "left",
-		Frames: []int{12, 13, 14},
+		Frames: []int{32, 33, 34, 35, 36, 37, 38, 39},
 		Loop:   true,
 	}
 
 	WalkRightAction = &common.Animation{
 		Name:   "right",
-		Frames: []int{24, 25, 26},
+		Frames: []int{96, 97, 98, 99, 100, 101, 102, 103, 104, 105},
 		Loop:   true,
 	}
 
@@ -144,13 +144,8 @@ func (scene *DefaultScene) Setup(w *ecs.World) {
 	levelWidth = levelData.Bounds().Max.X
 	levelHeight = levelData.Bounds().Max.Y
 
-	//base subsheet
-	subsheets := []*common.Subsheet{
-		common.NewSubsheet(float32(24*width), float32(16*height), 0, 5, width, height),
-	}
-
 	// Create Hero
-	spriteSheet := common.NewMultiSheetFromFile(model, subsheets)
+	spriteSheet := common.NewSpritesheetFromFile(model, width, height)
 
 	hero := scene.CreateHero(
 		engo.Point{engo.CanvasWidth() / 2, engo.CanvasHeight() / 2},
@@ -293,7 +288,7 @@ func (scene *DefaultScene) Setup(w *ecs.World) {
 
 func (*DefaultScene) Type() string { return "DefaultScene" }
 
-func (*DefaultScene) CreateHero(point engo.Point, spriteSheet *common.MultiSheet) *Hero {
+func (*DefaultScene) CreateHero(point engo.Point, spriteSheet *common.Spritesheet) *Hero {
 	hero := &Hero{BasicEntity: ecs.NewBasic()}
 
 	hero.SpaceComponent = common.SpaceComponent{
@@ -302,7 +297,7 @@ func (*DefaultScene) CreateHero(point engo.Point, spriteSheet *common.MultiSheet
 		Height:   float32(height),
 	}
 	hero.RenderComponent = common.RenderComponent{
-		Drawable: spriteSheet.Cell(0, 0),
+		Drawable: spriteSheet.Cell(0),
 		Scale:    engo.Point{1, 1},
 	}
 	hero.AnimationComponent = common.NewAnimationComponent(spriteSheet.Drawables(), 0.1)
@@ -365,7 +360,7 @@ func (c *ControlSystem) Update(dt float32) {
 			e.AnimationComponent.SelectAnimationByAction(StopRightAction)
 		}
 
-		speed := engo.GameWidth() * dt
+		speed := engo.GameWidth()/2 * dt
 
 		vert := engo.Input.Axis(e.ControlComponent.SchemeVert)
 		e.SpaceComponent.Position.Y += speed * vert.Value()
