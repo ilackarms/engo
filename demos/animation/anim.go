@@ -46,7 +46,7 @@ func (scene *DefaultScene) Setup(w *ecs.World) {
 	w.AddSystem(&common.AnimationSystem{})
 	w.AddSystem(&ControlSystem{})
 
-	spriteSheet := common.NewSpritesheetFromFile("hero.png", 150, 150)
+	spriteSheet := common.NewBasicSpritesheetFromFile("hero.png", 150, 150)
 
 	hero := scene.CreateEntity(engo.Point{0, 0}, spriteSheet)
 
@@ -65,7 +65,7 @@ func (scene *DefaultScene) Setup(w *ecs.World) {
 
 func (*DefaultScene) Type() string { return "GameWorld" }
 
-func (*DefaultScene) CreateEntity(point engo.Point, spriteSheet *common.Spritesheet) *Animation {
+func (*DefaultScene) CreateEntity(point engo.Point, spriteSheet *common.BasicSpritesheet) *Animation {
 	entity := &Animation{BasicEntity: ecs.NewBasic()}
 
 	entity.SpaceComponent = common.SpaceComponent{

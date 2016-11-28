@@ -104,7 +104,7 @@ func (*DefaultScene) Preload() {
 
 	WalkRightAction = &common.Animation{
 		Name:   "right",
-		Frames: []int{96, 97, 98, 99, 100, 101, 102, 103, 104, 105},
+		Frames: []int{96, 97, 98, 99, 100, 101, 102, 103},
 		Loop:   true,
 	}
 
@@ -145,7 +145,7 @@ func (scene *DefaultScene) Setup(w *ecs.World) {
 	levelHeight = levelData.Bounds().Max.Y
 
 	// Create Hero
-	spriteSheet := common.NewSpritesheetFromFile(model, width, height)
+	spriteSheet := common.NewBasicSpritesheetFromFile(model, width, height)
 
 	hero := scene.CreateHero(
 		engo.Point{engo.CanvasWidth() / 2, engo.CanvasHeight() / 2},
@@ -288,7 +288,7 @@ func (scene *DefaultScene) Setup(w *ecs.World) {
 
 func (*DefaultScene) Type() string { return "DefaultScene" }
 
-func (*DefaultScene) CreateHero(point engo.Point, spriteSheet *common.Spritesheet) *Hero {
+func (*DefaultScene) CreateHero(point engo.Point, spriteSheet *common.BasicSpritesheet) *Hero {
 	hero := &Hero{BasicEntity: ecs.NewBasic()}
 
 	hero.SpaceComponent = common.SpaceComponent{
